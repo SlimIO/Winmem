@@ -1,9 +1,9 @@
 {
     "targets": [
         {
-            "target_name": "windrive",
+            "target_name": "winmem",
             "sources": [
-                "windrive.cpp"
+                "winmem.cpp"
             ],
             "include_dirs": [
                 "include",

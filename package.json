@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SlimIO/WinDisk.git"
+    "url": "git+https://github.com/SlimIO/Winmem.git"
   },
   "keywords": [],
   "author": "SlimIO",
@@ -36,7 +36,7 @@
   "license": "MIT",
   "gypfile": true,
   "bugs": {
-    "url": "https://github.com/SlimIO/WinDisk/issues"
+    "url": "https://github.com/SlimIO/Winmem/issues"
   },
-  "homepage": "https://github.com/SlimIO/WinDisk#readme"
+  "homepage": "https://github.com/SlimIO/Winmem#readme"
 }

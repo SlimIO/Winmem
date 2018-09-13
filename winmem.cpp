@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <comdef.h>
 #include <sstream>
 #include <string>
 #include "napi.h"
@@ -13,5 +12,11 @@ using namespace Napi;
  */
 #define DRIVER_LENGTH 120
 
+
+// Initialize Native Addon
+Object Init(Env env, Object exports) {
+    return exports;
+}
+
 // Export Addon as winmem
-NODE_API_MODULE(windrive, Init)
+NODE_API_MODULE(winmem, Init)

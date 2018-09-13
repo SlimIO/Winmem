@@ -3,14 +3,6 @@ SlimIO Windmem is a NodeJS binding which expose low-level Microsoft APIs on Memo
 
 This binding expose the following methods/struct:
 
-- [GetLogicalDrives](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getlogicaldrives)
-- [GetDiskFreeSpace](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdiskfreespacea)
-- [GetDriveType](https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea)
-- [QueryDosDevice](https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-querydosdevicea)
-- [DISK_PERFORMANCE](https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ns-winioctl-_disk_performance)
-- [DISK_GEOMETRY_EX](https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ns-winioctl-_disk_geometry_ex)
-- [DISK_CACHE_INFORMATION](https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ns-winioctl-_disk_cache_information)
-
 > !!! All method are called asynchronously without blocking the libuv event-loop !!!
 
 ## Getting Started

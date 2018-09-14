@@ -1,5 +1,5 @@
 {
-  "name": "@slimio/windrive",
+  "name": "@slimio/winmem",
   "version": "0.0.0",
   "description": "Windows Memory low level binding",
   "main": "index.js",

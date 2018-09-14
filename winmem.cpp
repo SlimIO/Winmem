@@ -1,11 +1,10 @@
 #include <windows.h>
-#include <sstream>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <psapi.h>
 #include <tlhelp32.h>
-#include <unordered_map>
 #include "napi.h"
 
 using namespace std;
@@ -28,6 +27,7 @@ Value getPerformanceInfo(const CallbackInfo& info) {
     Env env = info.Env();
 
     PERFORMANCE_INFORMATION PerformanceInformation;
+    SecureZeroMemory(&PerformanceInformation, sizeof(PERFORMANCE_INFORMATION));
 
     BOOL status = GetPerformanceInfo(&PerformanceInformation, sizeof(PerformanceInformation));
     if (!status) {
@@ -86,7 +86,7 @@ Value globalMemoryStatus(const CallbackInfo& info) {
  * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32first
  * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32next
  */ 
-BOOL getProcessNameAndId(vector<DWORD>* vProc) {
+BOOL getProcessNameAndId(vector<pair<DWORD, string>>* vPairProc) {
     PROCESSENTRY32 pe32;
     HANDLE hProcessSnap;
  
@@ -108,9 +108,8 @@ BOOL getProcessNameAndId(vector<DWORD>* vProc) {
     
     // Insert rows in the processes map
     do {
-        //wstring wSzExeFile((wchar_t*) pe32.szExeFile);
-        //procMap->insert(make_pair(pe32.th32ProcessID, string(wSzExeFile.begin(), wSzExeFile.end())));
-        vProc->push_back(pe32.th32ProcessID);
+        wstring wSzExeFile((wchar_t*) pe32.szExeFile);
+        vPairProc->push_back(make_pair(pe32.th32ProcessID, string(wSzExeFile.begin(), wSzExeFile.end())));
     } while (Process32Next(hProcessSnap, &pe32));
  
     CloseHandle(hProcessSnap);
@@ -120,40 +119,57 @@ BOOL getProcessNameAndId(vector<DWORD>* vProc) {
 Value getProcessMemory(const CallbackInfo& info){
     Env env = info.Env();
 
-    vector<DWORD> processIds;
-
-    BOOL status = getProcessNameAndId(&processIds);
+    vector<pair<DWORD, string>> processNameAndId;
+    BOOL status = getProcessNameAndId(&processNameAndId);
     if (!status) {
         Error::New(env, getLastErrorMessage()).ThrowAsJavaScriptException();
         return env.Null();
     }
 
     BOOL statusProcessMemory;
+    HANDLE processHandle;
     Object ProcessMemories = Object::New(env);
-    for(size_t i = 0; i < processIds.size(); i++){
+    for(size_t i = 0; i < processNameAndId.size(); i++){
         HandleScope scope(info.Env());
-        PROCESS_MEMORY_COUNTERS ProcessMemory;
+        PROCESS_MEMORY_COUNTERS_EX ProcessMemory;
+        SecureZeroMemory(&ProcessMemory, sizeof(PROCESS_MEMORY_COUNTERS_EX));
 
-        DWORD processId = processIds.at(i);
+        // Retrieve process name and id
+        pair<DWORD, string> process = processNameAndId.at(i);
 
-        HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
-        if(processHandle == NULL) continue;
-
-        statusProcessMemory = GetProcessMemoryInfo(processHandle , &ProcessMemory, sizeof(ProcessMemory));
-        if (!statusProcessMemory) continue;
-
+        // Create default Object
         Object oProcessMemory = Object::New(env);
+        ProcessMemories.Set(process.second, oProcessMemory);
+
+        // Open process handle!
+        processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, process.first);
+        if(processHandle == NULL) {
+            stringstream error;
+            error << "Failed to OpenProcess id(" << process.first << "), error code (" << GetLastError() << ")" << endl;
+            oProcessMemory.Set("error", error.str());
+            continue;
+        }
+
+        statusProcessMemory = GetProcessMemoryInfo(processHandle, (PROCESS_MEMORY_COUNTERS*) &ProcessMemory, sizeof(ProcessMemory));
+        if (!statusProcessMemory) {
+            CloseHandle(processHandle);
+            continue;
+        }
+
+        oProcessMemory.Set("error", env.Null());
+        oProcessMemory.Set("processId", process.first);
         oProcessMemory.Set("pageFaultCount", ProcessMemory.PageFaultCount);
         oProcessMemory.Set("peakWorkingSetSize", ProcessMemory.PeakWorkingSetSize);
-        oProcessMemory.Set("qorkingSetSize", ProcessMemory.WorkingSetSize);
+        oProcessMemory.Set("workingSetSize", ProcessMemory.WorkingSetSize);
         oProcessMemory.Set("quotaPeakPagedPoolUsage", ProcessMemory.QuotaPeakPagedPoolUsage);
         oProcessMemory.Set("quotaPagedPoolUsage", ProcessMemory.QuotaPagedPoolUsage);
         oProcessMemory.Set("quotaPeakNonPagedPoolUsage", ProcessMemory.QuotaPeakNonPagedPoolUsage);
         oProcessMemory.Set("quotaNonPagedPoolUsage", ProcessMemory.QuotaNonPagedPoolUsage);
         oProcessMemory.Set("pagefileUsage", ProcessMemory.PagefileUsage);
         oProcessMemory.Set("peakPagefileUsage", ProcessMemory.PeakPagefileUsage);
+        oProcessMemory.Set("privateUsage", ProcessMemory.PrivateUsage);
 
-        ProcessMemories.Set(processId, oProcessMemory);
+        CloseHandle(processHandle);
     }
 
     return ProcessMemories;

@@ -23,59 +23,115 @@ string getLastErrorMessage() {
     return string(err);
 }
 
+class PerformanceInfoWorker : public AsyncWorker {
+    public:
+        PerformanceInfoWorker(Function& callback) : AsyncWorker(callback) {}
+        ~PerformanceInfoWorker() {}
+    private:
+        PERFORMANCE_INFORMATION PerformanceInformation;
+        
+        void Execute(){
+            SecureZeroMemory(&PerformanceInformation, sizeof(PERFORMANCE_INFORMATION));
+
+            BOOL status = GetPerformanceInfo(&PerformanceInformation, sizeof(PerformanceInformation));
+            if (!status) {
+                return SetError(getLastErrorMessage());
+            }
+        }
+
+        void OnOK() {
+            HandleScope scope(Env());
+
+            Object ret = Object::New(Env());
+            ret.Set("commitTotal", PerformanceInformation.CommitTotal);
+            ret.Set("commitLimit", PerformanceInformation.CommitLimit);
+            ret.Set("commitPeak", PerformanceInformation.CommitPeak);
+            ret.Set("physicalTotal", PerformanceInformation.PhysicalTotal);
+            ret.Set("physicalAvailable", PerformanceInformation.PhysicalAvailable);
+            ret.Set("systemCache", PerformanceInformation.SystemCache);
+            ret.Set("kernelTotal", PerformanceInformation.KernelTotal);
+            ret.Set("kernelPaged", PerformanceInformation.KernelPaged);
+            ret.Set("kernelNonpaged", PerformanceInformation.KernelNonpaged);
+            ret.Set("pageSize", PerformanceInformation.PageSize);
+            ret.Set("handleCount", PerformanceInformation.HandleCount);
+            ret.Set("processCount", PerformanceInformation.ProcessCount);
+            ret.Set("threadCount", PerformanceInformation.ThreadCount);
+
+            Callback().Call({Env().Null(), ret});
+        }
+};
+
 Value getPerformanceInfo(const CallbackInfo& info) {
     Env env = info.Env();
 
-    PERFORMANCE_INFORMATION PerformanceInformation;
-    SecureZeroMemory(&PerformanceInformation, sizeof(PERFORMANCE_INFORMATION));
-
-    BOOL status = GetPerformanceInfo(&PerformanceInformation, sizeof(PerformanceInformation));
-    if (!status) {
-        Error::New(env, getLastErrorMessage()).ThrowAsJavaScriptException();
+    // Check argument length!
+    if (info.Length() < 1) {
+        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
         return env.Null();
     }
 
-    Object ret = Object::New(env);
-    ret.Set("commitTotal", PerformanceInformation.CommitTotal);
-    ret.Set("commitLimit", PerformanceInformation.CommitLimit);
-    ret.Set("commitPeak", PerformanceInformation.CommitPeak);
-    ret.Set("physicalTotal", PerformanceInformation.PhysicalTotal);
-    ret.Set("physicalAvailable", PerformanceInformation.PhysicalAvailable);
-    ret.Set("systemCache", PerformanceInformation.SystemCache);
-    ret.Set("kernelTotal", PerformanceInformation.KernelTotal);
-    ret.Set("kernelPaged", PerformanceInformation.KernelPaged);
-    ret.Set("kernelNonpaged", PerformanceInformation.KernelNonpaged);
-    ret.Set("pageSize", PerformanceInformation.PageSize);
-    ret.Set("handleCount", PerformanceInformation.HandleCount);
-    ret.Set("processCount", PerformanceInformation.ProcessCount);
-    ret.Set("threadCount", PerformanceInformation.ThreadCount);
+    // callback should be a Napi::Function
+    if (!info[0].IsFunction()) {
+        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
 
-    return ret;
+    // Execute worker
+    Function cb = info[0].As<Function>();
+    (new PerformanceInfoWorker(cb))->Queue();
+    
+    return env.Undefined();
 }
+
+class globalMemoryWorker : public AsyncWorker {
+    public:
+        globalMemoryWorker(Function& callback) : AsyncWorker(callback) {}
+        ~globalMemoryWorker() {}
+    private:
+        MEMORYSTATUSEX statex;
+        
+        void Execute() {
+            statex.dwLength = sizeof(statex);
+            BOOL status = GlobalMemoryStatusEx(&statex);
+            if (!status) { return SetError(getLastErrorMessage()); }
+        }
+
+        void OnOK() {
+            HandleScope scope(Env());
+
+            Object ret = Object::New(Env());
+            ret.Set("dwMemoryLoad", statex.dwMemoryLoad);
+            ret.Set("ullTotalPhys", statex.ullTotalPhys);
+            ret.Set("ullAvailPhys", statex.ullAvailPhys);
+            ret.Set("ullTotalPageFile", statex.ullTotalPageFile);
+            ret.Set("ullAvailPageFile", statex.ullAvailPageFile);
+            ret.Set("ullTotalVirtual", statex.ullTotalVirtual);
+            ret.Set("ullAvailVirtual", statex.ullAvailVirtual);
+            ret.Set("ullAvailExtendedVirtual", statex.ullAvailExtendedVirtual);
+
+            Callback().Call({Env().Null(), ret});
+        }
+};
 
 Value globalMemoryStatus(const CallbackInfo& info) {
     Env env = info.Env();
 
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-
-    BOOL status = GlobalMemoryStatusEx(&statex);
-    if (!status) {
-        Error::New(env, getLastErrorMessage()).ThrowAsJavaScriptException();
+    // Check argument length!
+    if (info.Length() < 1) {
+        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
         return env.Null();
     }
 
-    Object ret = Object::New(env);
-    ret.Set("dwMemoryLoad", statex.dwMemoryLoad);
-    ret.Set("ullTotalPhys", statex.ullTotalPhys);
-    ret.Set("ullAvailPhys", statex.ullAvailPhys);
-    ret.Set("ullTotalPageFile", statex.ullTotalPageFile);
-    ret.Set("ullAvailPageFile", statex.ullAvailPageFile);
-    ret.Set("ullTotalVirtual", statex.ullTotalVirtual);
-    ret.Set("ullAvailVirtual", statex.ullAvailVirtual);
-    ret.Set("ullAvailExtendedVirtual", statex.ullAvailExtendedVirtual);
+    // callback should be a Napi::Function
+    if (!info[0].IsFunction()) {
+        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
 
-    return ret;
+    Function cb = info[0].As<Function>();
+    (new globalMemoryWorker(cb))->Queue();
+    
+    return env.Undefined();
 }
 
 /**
@@ -115,6 +171,21 @@ BOOL getProcessNameAndId(vector<pair<DWORD, string>>* vPairProc) {
     CloseHandle(hProcessSnap);
     return true;
 }
+
+// class ProcessMemoryWorker : public AsyncWorker {
+//     public:
+//         ProcessMemoryWorker(Function& callback) : AsyncWorker(callback) {}
+//         ~ProcessMemoryWorker() {}
+//     private:
+//         void Execute() {
+//         }
+
+//         void OnOK() {
+//             HandleScope scope(Env());
+
+//             Callback().Call({Env().Null(), ret});
+//         }
+// };
 
 Value getProcessMemory(const CallbackInfo& info){
     Env env = info.Env();

@@ -22,7 +22,16 @@ string getLastErrorMessage() {
     );
     return string(err);
 }
+/*
+ * @doc : Global Documentation : https://msdn.microsoft.com/en-us/b27ca747-8fd2-4267-9979-4e2e14a5a19f
+ */
 
+/*
+ * Asycnronous Worker to Retrieve Windows Performance Info
+ * 
+ * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getperformanceinfo
+ * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_performance_information
+ */
 class PerformanceInfoWorker : public AsyncWorker {
     public:
         PerformanceInfoWorker(Function& callback) : AsyncWorker(callback) {}
@@ -83,6 +92,12 @@ Value getPerformanceInfo(const CallbackInfo& info) {
     return env.Undefined();
 }
 
+/*
+ * Asycnronous Worker to Retrieve Windows Global Memory Status
+ * 
+ * @doc: https://msdn.microsoft.com/en-us/aa366589
+ * @doc: https://msdn.microsoft.com/en-us/aa366770
+ */
 class globalMemoryWorker : public AsyncWorker {
     public:
         globalMemoryWorker(Function& callback) : AsyncWorker(callback) {}
@@ -92,6 +107,7 @@ class globalMemoryWorker : public AsyncWorker {
         
         void Execute() {
             statex.dwLength = sizeof(statex);
+            SecureZeroMemory(&statex, statex.dwLength);
             BOOL status = GlobalMemoryStatusEx(&statex);
             if (!status) { return SetError(getLastErrorMessage()); }
         }
@@ -172,78 +188,140 @@ BOOL getProcessNameAndId(vector<pair<DWORD, string>>* vPairProc) {
     return true;
 }
 
-// class ProcessMemoryWorker : public AsyncWorker {
-//     public:
-//         ProcessMemoryWorker(Function& callback) : AsyncWorker(callback) {}
-//         ~ProcessMemoryWorker() {}
-//     private:
-//         void Execute() {
-//         }
+/*
+ * Asycnronous Worker to Retrieve Windows Process Memory Info
+ * 
+ * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getprocessmemoryinfo
+ * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+ */
+class ProcessMemoryWorker : public AsyncWorker {
+    public:
+        ProcessMemoryWorker(Function& callback) : AsyncWorker(callback) {}
+        ~ProcessMemoryWorker() {}
+    private:
+        struct PROCESS_MEMORY{
+            string error;
+            DWORD processId;
+            string processName;
+            DWORD  cb;
+            DWORD  PageFaultCount;
+            SIZE_T PeakWorkingSetSize;
+            SIZE_T WorkingSetSize;
+            SIZE_T QuotaPeakPagedPoolUsage;
+            SIZE_T QuotaPagedPoolUsage;
+            SIZE_T QuotaPeakNonPagedPoolUsage;
+            SIZE_T QuotaNonPagedPoolUsage;
+            SIZE_T PagefileUsage;
+            SIZE_T PeakPagefileUsage;
+            SIZE_T PrivateUsage;
+        };
 
-//         void OnOK() {
-//             HandleScope scope(Env());
+        vector<PROCESS_MEMORY> vProcessMemory;
 
-//             Callback().Call({Env().Null(), ret});
-//         }
-// };
+        void Execute() {
+            vector<pair<DWORD, string>> processNameAndId;
+            BOOL status = getProcessNameAndId(&processNameAndId);
+            if (!status) {
+                SetError(getLastErrorMessage());
+            }
+
+            BOOL statusProcessMemory;
+            HANDLE processHandle;
+            PROCESS_MEMORY_COUNTERS_EX ProcessMemory;
+            PROCESS_MEMORY nProcessMemory;
+            for(size_t i = 0; i < processNameAndId.size(); i++){
+                SecureZeroMemory(&ProcessMemory, sizeof(ProcessMemory));
+                SecureZeroMemory(&nProcessMemory, sizeof(nProcessMemory));
+
+                // Retrieve process name and id
+                pair<DWORD, string> process = processNameAndId.at(i);
+
+                nProcessMemory.processId = process.first;
+                nProcessMemory.processName = process.second;
+                
+                // Open process handle!
+                processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, process.first);
+                if(processHandle == NULL) {
+                    stringstream error;
+                    error << "Failed to OpenProcess id(" << process.first << "), error code (" << GetLastError() << ")" << endl;
+                    nProcessMemory.error = error.str();
+                    vProcessMemory.push_back(nProcessMemory);
+                    continue;
+                }
+
+                statusProcessMemory = GetProcessMemoryInfo(processHandle, (PROCESS_MEMORY_COUNTERS*) &ProcessMemory, sizeof(ProcessMemory));
+                if (!statusProcessMemory) {
+                    CloseHandle(processHandle);
+                    vProcessMemory.push_back(nProcessMemory);
+                    continue;
+                }
+                nProcessMemory.PageFaultCount = ProcessMemory.PageFaultCount;
+                nProcessMemory.PeakWorkingSetSize = ProcessMemory.PeakWorkingSetSize;
+                nProcessMemory.WorkingSetSize = ProcessMemory.WorkingSetSize;
+                nProcessMemory.QuotaPeakPagedPoolUsage = ProcessMemory.QuotaPeakPagedPoolUsage;
+                nProcessMemory.QuotaPagedPoolUsage = ProcessMemory.QuotaPagedPoolUsage;
+                nProcessMemory.QuotaPeakNonPagedPoolUsage = ProcessMemory.QuotaPeakNonPagedPoolUsage;
+                nProcessMemory.QuotaNonPagedPoolUsage = ProcessMemory.QuotaNonPagedPoolUsage;
+                nProcessMemory.PagefileUsage = ProcessMemory.PagefileUsage;
+                nProcessMemory.PeakPagefileUsage = ProcessMemory.PeakPagefileUsage;
+                nProcessMemory.PrivateUsage = ProcessMemory.PrivateUsage;
+                vProcessMemory.push_back(nProcessMemory);
+
+                CloseHandle(processHandle);
+            }
+        }
+
+        void OnOK() {
+            HandleScope scope(Env());
+
+            Object ret = Object::New(Env());
+            for(size_t i = 0; i < vProcessMemory.size(); i++){
+                Object oProcessMemory = Object::New(Env());
+
+                PROCESS_MEMORY ProcessMemory = vProcessMemory.at(i);
+
+                ret.Set(ProcessMemory.processName, oProcessMemory);
+                if(ProcessMemory.error == string("")) {
+                    oProcessMemory.Set("error", Env().Null());
+                }
+                else {
+                    oProcessMemory.Set("error", ProcessMemory.error);
+                }
+                oProcessMemory.Set("processId",                     ProcessMemory.processId);
+                oProcessMemory.Set("pageFaultCount",                ProcessMemory.PageFaultCount);
+                oProcessMemory.Set("peakWorkingSetSize",            ProcessMemory.PeakWorkingSetSize);
+                oProcessMemory.Set("workingSetSize",                ProcessMemory.WorkingSetSize);
+                oProcessMemory.Set("quotaPeakPagedPoolUsage",       ProcessMemory.QuotaPeakPagedPoolUsage);
+                oProcessMemory.Set("quotaPagedPoolUsage",           ProcessMemory.QuotaPagedPoolUsage);
+                oProcessMemory.Set("quotaPeakNonPagedPoolUsage",    ProcessMemory.QuotaPeakNonPagedPoolUsage);
+                oProcessMemory.Set("quotaNonPagedPoolUsage",        ProcessMemory.QuotaNonPagedPoolUsage);
+                oProcessMemory.Set("pagefileUsage",                 ProcessMemory.PagefileUsage);
+                oProcessMemory.Set("peakPagefileUsage",             ProcessMemory.PeakPagefileUsage);
+                oProcessMemory.Set("privateUsage",                  ProcessMemory.PrivateUsage);
+            }
+            Callback().Call({Env().Null(), ret});
+        }
+};
 
 Value getProcessMemory(const CallbackInfo& info){
     Env env = info.Env();
 
-    vector<pair<DWORD, string>> processNameAndId;
-    BOOL status = getProcessNameAndId(&processNameAndId);
-    if (!status) {
-        Error::New(env, getLastErrorMessage()).ThrowAsJavaScriptException();
+    // Check argument length!
+    if (info.Length() < 1) {
+        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
         return env.Null();
     }
 
-    BOOL statusProcessMemory;
-    HANDLE processHandle;
-    Object ProcessMemories = Object::New(env);
-    for(size_t i = 0; i < processNameAndId.size(); i++){
-        HandleScope scope(info.Env());
-        PROCESS_MEMORY_COUNTERS_EX ProcessMemory;
-        SecureZeroMemory(&ProcessMemory, sizeof(PROCESS_MEMORY_COUNTERS_EX));
-
-        // Retrieve process name and id
-        pair<DWORD, string> process = processNameAndId.at(i);
-
-        // Create default Object
-        Object oProcessMemory = Object::New(env);
-        ProcessMemories.Set(process.second, oProcessMemory);
-
-        // Open process handle!
-        processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, process.first);
-        if(processHandle == NULL) {
-            stringstream error;
-            error << "Failed to OpenProcess id(" << process.first << "), error code (" << GetLastError() << ")" << endl;
-            oProcessMemory.Set("error", error.str());
-            continue;
-        }
-
-        statusProcessMemory = GetProcessMemoryInfo(processHandle, (PROCESS_MEMORY_COUNTERS*) &ProcessMemory, sizeof(ProcessMemory));
-        if (!statusProcessMemory) {
-            CloseHandle(processHandle);
-            continue;
-        }
-
-        oProcessMemory.Set("error", env.Null());
-        oProcessMemory.Set("processId", process.first);
-        oProcessMemory.Set("pageFaultCount", ProcessMemory.PageFaultCount);
-        oProcessMemory.Set("peakWorkingSetSize", ProcessMemory.PeakWorkingSetSize);
-        oProcessMemory.Set("workingSetSize", ProcessMemory.WorkingSetSize);
-        oProcessMemory.Set("quotaPeakPagedPoolUsage", ProcessMemory.QuotaPeakPagedPoolUsage);
-        oProcessMemory.Set("quotaPagedPoolUsage", ProcessMemory.QuotaPagedPoolUsage);
-        oProcessMemory.Set("quotaPeakNonPagedPoolUsage", ProcessMemory.QuotaPeakNonPagedPoolUsage);
-        oProcessMemory.Set("quotaNonPagedPoolUsage", ProcessMemory.QuotaNonPagedPoolUsage);
-        oProcessMemory.Set("pagefileUsage", ProcessMemory.PagefileUsage);
-        oProcessMemory.Set("peakPagefileUsage", ProcessMemory.PeakPagefileUsage);
-        oProcessMemory.Set("privateUsage", ProcessMemory.PrivateUsage);
-
-        CloseHandle(processHandle);
+    // callback should be a Napi::Function
+    if (!info[0].IsFunction()) {
+        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        return env.Null();
     }
 
-    return ProcessMemories;
+    Function cb = info[0].As<Function>();
+    (new ProcessMemoryWorker(cb))->Queue();
+    
+    return env.Undefined();
 }
 
 

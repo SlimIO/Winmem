@@ -3,6 +3,7 @@
  * @desc Windows Drive (disk) & Devices - Node.JS low level binding
  */
 const winmem = require("bindings")("winmem.node");
+const { writeFile } = require("fs").promises;
 
 
 // console.time("getPerformanceInfo");
@@ -26,6 +27,12 @@ const winmem = require("bindings")("winmem.node");
 // console.timeEnd("globalMemoryStatus");
 
 
-// console.time("getProcessMemory");
-console.log(winmem.getProcessMemory());
-// console.timeEnd("getProcessMemory");
+console.time("getProcessMemory");
+winmem.getProcessMemory((error, data) => {
+    if (error) {
+        console.log(`Error : ${error}`);
+    }
+    // console.log("Data :");
+    // console.log(data);
+});
+console.timeEnd("getProcessMemory");

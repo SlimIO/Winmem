@@ -66,7 +66,7 @@ function globalMemoryStatus() {
  * @async
  * @function getProcessMemory
  * @memberof winmem#
- * @desc Retrieves the currently process memories. An array of ProcessMemory is returned.
+ * @desc Retrieves the currently process memories. Return a ProcessMemories Object.
  * @return {Promise<Winmem.ProcessMemory[]>}
  *
  * @version 1.0.0

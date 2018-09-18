@@ -38,7 +38,7 @@ function getPerformanceInfo() {
  * @function globalMemoryStatus
  * @memberof winmem#
  * @desc Retrieves the currently global memory status. Return a GlobalMemory Object.
- * @return {Promise<Winmem.PerfomanceInfo>}
+ * @return {Promise<Winmem.GlobalMemory>}
  *
  * @version 1.0.0
  * @example
@@ -66,7 +66,7 @@ function globalMemoryStatus() {
  * @async
  * @function getProcessMemory
  * @memberof winmem#
- * @desc Retrieves the currently process memories. Return a ProcessMemories Object.
+ * @desc Retrieves all currently process memories. Return a ProcessMemories Object.
  * @return {Promise<Winmem.ProcessMemory[]>}
  *
  * @version 1.0.0

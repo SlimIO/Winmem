@@ -22,9 +22,87 @@ $ npm i @slimio/winmem
 $ yarn add @slimio/winmem
 ```
 
+## Usage example
+
+Get, global or by process, memory informations !
+
+```js
+const winmem = require("@slimio/winmem");
+
+async function main() {
+    const perfomanceInfo = await winmem.getPerformanceInfo();
+    console.log(perfomanceInfo);
+
+    const globalMemory = await winmem.globalMemoryStatus();
+    console.log(globalMemory);
+
+    const processMemories = await windrive.getProcessMemory();
+    for (const [processName, processMemory] of Object.entries(processMemories)) {
+        console.log(`${processName} : ${processMemory}`);
+    }
+}
+main().catch(console.error);
+```
+
 ## API
 
-Media type enumeration can be retrieved [here](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365231(v=vs.85).aspx).
+### getPerformanceInfo: Promise< PerfomanceInfo >
+Retrieves the currently performance information. Return a PerfomanceInfo Object.
+```ts
+export interface PerfomanceInfo {
+    commitTotal: number;
+    commitLimit: number;
+    commitPeak: number;
+    physicalTotal: number;
+    physicalAvailable: number;
+    systemCache: number;
+    kernelTotal: number;
+    kernelPaged: number;
+    kernelNonpaged: number;
+    pageSize: number;
+    handleCount: number;
+    processCount: number;
+    threadCount: number;
+}
+```
+
+### globalMemoryStatus: Promise< GlobalMemory >
+Retrieves the currently gloval memory status. Return a GlobalMemory Object.
+```ts
+export interface GlobalMemory {
+    dwMemoryLoad: number;
+    ullTotalPhys: number;
+    ullAvailPhys: number;
+    ullTotalPageFile: number;
+    ullAvailPageFile: number;
+    ullTotalVirtual: number;
+    ullAvailVirtual: number;
+    ullAvailExtendedVirtual: number;
+}
+```
+
+### getProcessMemory: Promise< ProcessMemory[] >
+Retrieves all currently process memories. Return a ProcessMemories Object.
+```ts
+export interface ProcessMemories{
+    [processName: string]: ProcessMemory;
+}
+
+export interface ProcessMemory {
+    error: string;
+    processId: number;
+    pageFaultCount: number;
+    peakWorkingSetSize: number;
+    workingSetSize: number;
+    quotaPeakPagedPoolUsage: number;
+    quotaPagedPoolUsage: number;
+    quotaPeakNonPagedPoolUsage: number;
+    quotaNonPagedPoolUsage: number;
+    pagefileUsage: number;
+    peakPagefileUsage: number;
+    privateUsage: number;
+}
+```
 
 ## How to build the project
 

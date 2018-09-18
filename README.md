@@ -3,6 +3,13 @@ SlimIO Windmem is a NodeJS binding which expose low-level Microsoft APIs on Memo
 
 This binding expose the following methods/struct:
 
+- [GetPerfomanceInfo](https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getperformanceinfo)
+- [GlobalMemoryStatusEx](https://msdn.microsoft.com/en-us/aa366589)
+- [GetProcessMemoryInfo](https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getprocessmemoryinfo)
+- [PERFORMANCE_INFORMATION](https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_performance_information)
+- [MEMORYSTATUSEX](https://msdn.microsoft.com/en-us/aa366770)
+- [PROCESS_MEMORY_COUNTERS_EX](https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex)
+
 > !!! All method are called asynchronously without blocking the libuv event-loop !!!
 
 ## Getting Started

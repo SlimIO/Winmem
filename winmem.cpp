@@ -106,8 +106,8 @@ class globalMemoryWorker : public AsyncWorker {
         MEMORYSTATUSEX statex;
         
         void Execute() {
+            SecureZeroMemory(&statex, sizeof(statex));
             statex.dwLength = sizeof(statex);
-            SecureZeroMemory(&statex, statex.dwLength);
             BOOL status = GlobalMemoryStatusEx(&statex);
             if (!status) { return SetError(getLastErrorMessage()); }
         }

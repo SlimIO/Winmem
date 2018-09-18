@@ -47,8 +47,8 @@ declare namespace Winmem {
     }
 
     export function getPerformanceInfo(): Promise<PerfomanceInfo[]>;
-    export function globalMemoryStatus(deviceName: string): Promise<GlobalMemory>;
-    export function getProcessMemory(deviceName: string): Promise<ProcessMemories>;
+    export function globalMemoryStatus(): Promise<GlobalMemory>;
+    export function getProcessMemory(): Promise<ProcessMemories>;
 }
 
 export as namespace Winmem;

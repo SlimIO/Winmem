@@ -38,7 +38,7 @@ async function main() {
 
     const processMemories = await windrive.getProcessMemory();
     for (const [processName, processMemory] of Object.entries(processMemories)) {
-        console.log(`${processName} : ${processMemory}`);
+        console.log(`${processName} : ${JSON.stringify(processMemory, null, 4)}`);
     }
 }
 main().catch(console.error);
@@ -48,6 +48,7 @@ main().catch(console.error);
 
 ### getPerformanceInfo: Promise< PerfomanceInfo >
 Retrieves the currently performance information. Return a PerfomanceInfo Object.
+
 ```ts
 export interface PerfomanceInfo {
     commitTotal: number;
@@ -68,6 +69,7 @@ export interface PerfomanceInfo {
 
 ### globalMemoryStatus: Promise< GlobalMemory >
 Retrieves the currently gloval memory status. Return a GlobalMemory Object.
+
 ```ts
 export interface GlobalMemory {
     dwMemoryLoad: number;
@@ -83,6 +85,7 @@ export interface GlobalMemory {
 
 ### getProcessMemory: Promise< ProcessMemory[] >
 Retrieves all currently process memories. Return a ProcessMemories Object.
+
 ```ts
 export interface ProcessMemories{
     [processName: string]: ProcessMemory;
@@ -103,6 +106,7 @@ export interface ProcessMemory {
     privateUsage: number;
 }
 ```
+> If error is null, all value is equal to 0
 
 ## How to build the project
 

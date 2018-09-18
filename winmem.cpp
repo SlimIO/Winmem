@@ -44,8 +44,14 @@ class PerformanceInfoWorker : public AsyncWorker {
 
             BOOL status = GetPerformanceInfo(&PerformanceInformation, sizeof(PerformanceInformation));
             if (!status) {
-                return SetError(getLastErrorMessage());
+                return SetError("Failed status of GetPerformanceInfo");
             }
+        }
+
+        void OnError(const Error& e) {
+            stringstream error;
+            error << e.what() << getLastErrorMessage();
+            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {
@@ -109,7 +115,15 @@ class globalMemoryWorker : public AsyncWorker {
             SecureZeroMemory(&statex, sizeof(statex));
             statex.dwLength = sizeof(statex);
             BOOL status = GlobalMemoryStatusEx(&statex);
-            if (!status) { return SetError(getLastErrorMessage()); }
+            if (!status) {
+                return SetError("Failed status of GlobalMemoryStatusEx");
+            }
+        }
+
+        void OnError(const Error& e) {
+            stringstream error;
+            error << e.what() << getLastErrorMessage();
+            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {
@@ -222,7 +236,7 @@ class ProcessMemoryWorker : public AsyncWorker {
             vector<pair<DWORD, string>> processNameAndId;
             BOOL status = getProcessNameAndId(&processNameAndId);
             if (!status) {
-                SetError(getLastErrorMessage());
+                SetError("Failed status of getProcessNameAndId");
             }
 
             BOOL statusProcessMemory;
@@ -269,6 +283,12 @@ class ProcessMemoryWorker : public AsyncWorker {
 
                 CloseHandle(processHandle);
             }
+        }
+
+        void OnError(const Error& e) {
+            stringstream error;
+            error << e.what() << getLastErrorMessage();
+            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {

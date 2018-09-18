@@ -106,7 +106,7 @@ export interface ProcessMemory {
     privateUsage: number;
 }
 ```
-> If error is null, all value is equal to 0
+> If the result of `error` property is `null`, all properties (except `processId`) are equal to `0`
 
 ## How to build the project
 

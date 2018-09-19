@@ -57,7 +57,7 @@ test("getProcessMemory()", async function getProcessMemory(assert) {
         assert.is(is.plainObject(processMemory), true);
 
         assert.is(Reflect.has(processMemory, "error"), true);
-        if (is.string(processMemory.error) || !is.nullOrUndefined(processMemory.error)) {
+        if (is.string(processMemory.error)) {
             assert.is(processMemory.pageFaultCount, 0);
             assert.is(processMemory.peakWorkingSetSize, 0);
             assert.is(processMemory.workingSetSize, 0);

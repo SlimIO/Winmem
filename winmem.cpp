@@ -1,9 +1,8 @@
 #include <windows.h>
 #include <string>
-#include <iostream>
 #include <sstream>
 #include <vector>
-#include <psapi.h>
+#include "Psapi.h"
 #include <tlhelp32.h>
 #include "napi.h"
 
@@ -29,6 +28,7 @@ string getLastErrorMessage() {
 /*
  * Asycnronous Worker to Retrieve Windows Performance Info
  * 
+ * @header: psapi.h
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getperformanceinfo
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_performance_information
  */
@@ -205,6 +205,7 @@ BOOL getProcessNameAndId(vector<pair<DWORD, string>>* vPairProc) {
 /*
  * Asycnronous Worker to Retrieve Windows Process Memory Info
  * 
+ * @header: psapi.h
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getprocessmemoryinfo
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
  */

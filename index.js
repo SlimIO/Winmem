@@ -2,7 +2,7 @@
  * @namespace winmem
  * @desc Windows Drive (disk) & Devices - Node.JS low level binding
  */
-const winmem = require("bindings")("winmem.node");
+const winmem = require("node-gyp-build")(__dirname);
 
 /**
  * @async

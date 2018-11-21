@@ -28,9 +28,11 @@
     "husky": "^1.2.0",
     "node-gyp": "^3.5.0",
     "nyc": "^13.0.1",
+    "pkg-ok": "^2.3.1",
     "prebuildify": "^2.8.0"
   },
   "scripts": {
+    "prepublish": "pkg-ok",
     "test": "ava --verbose",
     "prebuild": "prebuildify --napi",
     "install": "node-gyp rebuild",

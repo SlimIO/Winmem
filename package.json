@@ -22,12 +22,12 @@
     "prebuildify": "^2.8.0"
   },
   "scripts": {
-    "test": "npx ava --verbose",
-    "prebuild": "npx prebuildify --napi",
-    "install": "npx node-gyp rebuild",
-    "doc": "npx jsdoc -c ./jsdoc.json -r",
-    "coverage": "npx nyc ava",
-    "report": "npx nyc report --reporter=html"
+    "test": "ava --verbose",
+    "prebuild": "prebuildify --napi",
+    "install": "node-gyp rebuild",
+    "doc": "jsdoc -c ./jsdoc.json -r -R ./README.md -P ./package.json --verbose",
+    "coverage": "nyc npm test",
+    "report": "nyc report --reporter=html"
   },
   "repository": {
     "type": "git",

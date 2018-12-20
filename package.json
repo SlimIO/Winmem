@@ -54,7 +54,17 @@
     "type": "git",
     "url": "git+https://github.com/SlimIO/Winmem.git"
   },
-  "keywords": [],
+  "keywords": [
+      "SlimIO",
+      "Monitoring",
+      "Memory",
+      "Binding",
+      "NAPI",
+      "Windows",
+      "Microsoft",
+      "Performance",
+      "MemoryStatus"
+  ],
   "author": "SlimIO",
   "private": false,
   "license": "MIT",

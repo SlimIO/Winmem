@@ -3,6 +3,7 @@ tests/
 coverage/
 .nyc_output/
 docs/
+build/
 jsdoc.json
 CONTRIBUTING.md
 .editorconfig
@@ -10,3 +11,4 @@ CONTRIBUTING.md
 .gitignore
 tsconfig.json
 commitlint.config.js
+.vscode

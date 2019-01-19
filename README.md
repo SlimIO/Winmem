@@ -2,6 +2,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/SlimIO/Winmem/commit-activity)
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/SlimIO/Winmem/blob/master/LICENSE)
 ![V1.0](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![N-API](https://img.shields.io/badge/N--API-experimental-orange.svg)
 
 SlimIO Winmem is a NodeJS binding which expose low-level Microsoft APIs on Memory.
 

@@ -6,7 +6,7 @@
 ![2DEP](https://img.shields.io/badge/Dependencies-2-yellow.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/SlimIO/Windrive/badge.svg?targetFile=package.json)](https://snyk.io/test/github/SlimIO/Windrive?targetFile=package.json)
 
-SlimIO Winmem is a NodeJS binding which expose low-level Microsoft APIs on Memory.
+SlimIO Winmem is a Node.js binding which expose low-level Microsoft APIs on Memory.
 
 This binding expose the following methods/struct:
 
@@ -119,7 +119,7 @@ export interface ProcessMemory {
 
 Before building the project, be sure to get the following npm package installed:
 
-- Install (or upgrade to) NodeJS v10+ and npm v6+
+- Install (or upgrade to) Node.js v10+ and npm v6+
 - [Windows build tools](https://www.npmjs.com/package/windows-build-tools)
 
 Then, execute these commands in order:

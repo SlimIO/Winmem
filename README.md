@@ -19,6 +19,9 @@ This binding expose the following methods/struct:
 
 > !!! All method are called asynchronously without blocking the libuv event-loop !!!
 
+## Requirements
+- Node.js v10 or higher.
+
 ## Getting Started
 
 This package is available in the Node Package Repository and can be easily installed with [npm](https://docs.npmjs.com/getting-started/what-is-npm) or [yarn](https://yarnpkg.com).
@@ -115,30 +118,9 @@ export interface ProcessMemory {
 ```
 > If the result of `error` property is `null`, all properties (except `processId`) are equal to `0`
 
-## How to build the project
+## Contribution Guidelines
+To contribute to the project, please read the [code of conduct](https://github.com/SlimIO/Governance/blob/master/COC_POLICY.md) and the guide for [N-API compilation](https://github.com/SlimIO/Governance/blob/master/docs/native_addons.md).
 
-Before building the project, be sure to get the following npm package installed:
+## License
+MIT
 
-- Install (or upgrade to) Node.js v10+ and npm v6+
-- [Windows build tools](https://www.npmjs.com/package/windows-build-tools)
-
-Then, execute these commands in order:
-
-```bash
-$ npm install
-$ npx node-gyp configure
-$ npx node-gyp build
-```
-
-## Available commands
-
-All projects commands are described here:
-
-| command | description |
-| --- | --- |
-| npm run prebuild | Generate addon prebuild |
-| npm run doc | Generate JSDoc .HTML documentation (in the /docs root directory) |
-| npm run coverage | Generate coverage of tests |
-| npm run report | Generate .HTML report of tests coverage |
-
-> the report command have to be triggered after the coverage command.

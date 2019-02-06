@@ -5,7 +5,7 @@
 [![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/SlimIO/Winmem/blob/master/LICENSE)
 ![2DEP](https://img.shields.io/badge/Dependencies-2-yellow.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/SlimIO/Windrive/badge.svg?targetFile=package.json)](https://snyk.io/test/github/SlimIO/Windrive?targetFile=package.json)
-[![Build Status](https://travis-ci.com/SlimIO/Winmem.svg?branch=master)](https://travis-ci.com/SlimIO/Winmem)
+[![Build Status](https://travis-ci.com/SlimIO/Winmem.svg?branch=master)](https://travis-ci.com/SlimIO/Winmem) [![Greenkeeper badge](https://badges.greenkeeper.io/SlimIO/Winmem.svg)](https://greenkeeper.io/)
 
 SlimIO Winmem is a Node.js binding which expose low-level Microsoft APIs on Memory.
 

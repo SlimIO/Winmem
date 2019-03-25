@@ -57,7 +57,9 @@ main().catch(console.error);
 
 ## API
 
-### getPerformanceInfo: Promise< PerfomanceInfo >
+<details><summary>getPerformanceInfo: Promise< PerfomanceInfo ></summary>
+<br />
+
 Retrieves the currently performance information. Return a PerfomanceInfo Object.
 
 ```ts
@@ -77,8 +79,11 @@ export interface PerfomanceInfo {
     threadCount: number;
 }
 ```
+</details>
 
-### globalMemoryStatus: Promise< GlobalMemory >
+<details><summary>globalMemoryStatus: Promise< GlobalMemory ></summary>
+<br />
+
 Retrieves the currently gloval memory status. Return a GlobalMemory Object.
 
 ```ts
@@ -93,8 +98,11 @@ export interface GlobalMemory {
     ullAvailExtendedVirtual: number;
 }
 ```
+</details>
 
-### getProcessMemory: Promise< ProcessMemory[] >
+<details><summary>getProcessMemory: Promise< ProcessMemory[] ></summary>
+<br />
+
 Retrieves all currently process memories. Return a ProcessMemories Object.
 
 ```ts
@@ -118,6 +126,7 @@ export interface ProcessMemory {
 }
 ```
 > If the result of `error` property is `null`, all properties (except `processId`) are equal to `0`
+</details>
 
 ## Contribution Guidelines
 To contribute to the project, please read the [code of conduct](https://github.com/SlimIO/Governance/blob/master/COC_POLICY.md) and the guide for [N-API compilation](https://github.com/SlimIO/Governance/blob/master/docs/native_addons.md).

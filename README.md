@@ -18,7 +18,7 @@ This binding expose the following methods/struct:
 - [MEMORYSTATUSEX](https://msdn.microsoft.com/en-us/aa366770)
 - [PROCESS_MEMORY_COUNTERS_EX](https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex)
 
-> !!! All method are called asynchronously without blocking the libuv event-loop !!!
+> ⚠️ All methods are handled asynchronously in a Worker to not starve the event-loop.
 
 ## Requirements
 - Node.js v10 or higher.

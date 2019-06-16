@@ -1,3 +1,4 @@
 name = "winmem"
 version = "1.1.0"
+platform = "Windows"
 type = "NAPI"

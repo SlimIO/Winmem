@@ -1,6 +1,8 @@
+"use strict";
+
 /**
  * @namespace winmem
- * @desc Windows Drive (disk) & Devices - Node.JS low level binding
+ * @description Windows Drive (disk) & Devices - Node.JS low level binding
  */
 const winmem = require("node-gyp-build")(__dirname);
 
@@ -8,8 +10,8 @@ const winmem = require("node-gyp-build")(__dirname);
  * @async
  * @function getPerformanceInfo
  * @memberof winmem#
- * @desc Retrieves the currently performance information. Return a PerfomanceInfo Object.
- * @return {Promise<Winmem.PerfomanceInfo>}
+ * @description Retrieves the currently performance information. Return a PerfomanceInfo Object.
+ * @returns {Promise<Winmem.PerfomanceInfo>}
  *
  * @version 1.0.0
  * @example
@@ -37,8 +39,8 @@ function getPerformanceInfo() {
  * @async
  * @function globalMemoryStatus
  * @memberof winmem#
- * @desc Retrieves the currently global memory status. Return a GlobalMemory Object.
- * @return {Promise<Winmem.GlobalMemory>}
+ * @description Retrieves the currently global memory status. Return a GlobalMemory Object.
+ * @returns {Promise<Winmem.GlobalMemory>}
  *
  * @version 1.0.0
  * @example
@@ -66,8 +68,8 @@ function globalMemoryStatus() {
  * @async
  * @function getProcessMemory
  * @memberof winmem#
- * @desc Retrieves all currently process memories. Return a ProcessMemories Object.
- * @return {Promise<Winmem.ProcessMemory[]>}
+ * @description Retrieves all currently process memories. Return a ProcessMemories Object.
+ * @returns {Promise<Winmem.ProcessMemory[]>}
  *
  * @version 1.0.0
  * @example

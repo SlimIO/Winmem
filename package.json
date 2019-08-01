@@ -65,6 +65,10 @@
     "Performance",
     "MemoryStatus"
   ],
+  "files": [
+    "index.js",
+    "index.d.ts"
+],
   "author": "SlimIO",
   "private": false,
   "license": "MIT",

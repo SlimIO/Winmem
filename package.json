@@ -70,7 +70,8 @@
     "index.d.ts",
     "windrive.cpp",
     "binding.gyp",
-    "include/* .h"
+    "include/* .h",
+    "prebuilds"
   ],
   "author": "SlimIO",
   "private": false,

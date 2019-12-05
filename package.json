@@ -68,7 +68,7 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "windrive.cpp",
+    "winmem.cpp",
     "binding.gyp",
     "include/* .h",
     "prebuilds"

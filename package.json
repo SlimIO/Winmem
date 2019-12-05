@@ -70,8 +70,7 @@
     "index.d.ts",
     "winmem.cpp",
     "binding.gyp",
-    "include/* .h",
-    "prebuilds"
+    "include/* .h"
   ],
   "author": "SlimIO",
   "private": false,

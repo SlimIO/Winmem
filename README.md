@@ -2,11 +2,12 @@
 ![version](https://img.shields.io/badge/dynamic/json.svg?url=https://raw.githubusercontent.com/SlimIO/Winmem/master/package.json&query=$.version&label=Version)
 ![N-API](https://img.shields.io/badge/N--API-v3-green.svg)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/SlimIO/Winmem/commit-activity)
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/SlimIO/Winmem/blob/master/LICENSE)
+[![mit](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/SlimIO/Winmem/blob/master/LICENSE)
 ![dep](https://img.shields.io/david/SlimIO/Winmem.svg)
 ![size](https://img.shields.io/bundlephobia/min/@slimio/winmem.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/SlimIO/Windrive/badge.svg?targetFile=package.json)](https://snyk.io/test/github/SlimIO/Windrive?targetFile=package.json)
-[![Build Status](https://travis-ci.com/SlimIO/Winmem.svg?branch=master)](https://travis-ci.com/SlimIO/Winmem) [![Greenkeeper badge](https://badges.greenkeeper.io/SlimIO/Winmem.svg)](https://greenkeeper.io/)
+[![Build Status](https://travis-ci.com/SlimIO/Winmem.svg?branch=master)](https://travis-ci.com/SlimIO/Winmem)
+[![Greenkeeper badge](https://badges.greenkeeper.io/SlimIO/Winmem.svg)](https://greenkeeper.io/)
 
 SlimIO Winmem is a Node.js binding which expose low-level Microsoft APIs on Memory.
 

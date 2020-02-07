@@ -6,39 +6,72 @@
 #include <tlhelp32.h>
 #include "napi.h"
 
-using namespace std;
-using namespace Napi;
-
 /*
  * Retrieve last message error with code of GetLastError()
  */
-string getLastErrorMessage() {
+std::string getLastErrorMessage() {
     char err[256];
     FormatMessageA(
         FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(),
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         err, 255, NULL
     );
-    return string(err);
+    return std::string(err);
 }
-/*
- * @doc : Global Documentation : https://msdn.microsoft.com/en-us/b27ca747-8fd2-4267-9979-4e2e14a5a19f
+
+/**
+ * Retrieve Process Name and ID
+ *
+ * @header: tlhelp32.h
+ * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-createtoolhelp32snapshot
+ * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32first
+ * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32next
  */
+BOOL getProcessNameAndId(std::vector<std::pair<DWORD, std::string>>* vPairProc) {
+    PROCESSENTRY32 pe32;
+    HANDLE hProcessSnap;
+
+    // Take a snapshot of all processes in the system.
+    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    // Set the size of the structure before using it.
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    // Retrieve information about the first process,
+    // and exit if unsuccessful
+    if (!Process32First(hProcessSnap, &pe32)) {
+        CloseHandle(hProcessSnap); // clean the snapshot object
+        return false;
+    }
+
+    // Insert rows in the processes map
+    do {
+        std::wstring wSzExeFile((wchar_t*) pe32.szExeFile);
+        vPairProc->push_back(std::make_pair(pe32.th32ProcessID, std::string(wSzExeFile.begin(), wSzExeFile.end())));
+    } while (Process32Next(hProcessSnap, &pe32));
+
+    CloseHandle(hProcessSnap);
+    return true;
+}
 
 /*
  * Asycnronous Worker to Retrieve Windows Performance Info
- * 
+ *
  * @header: psapi.h
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getperformanceinfo
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_performance_information
+ * @doc: https://msdn.microsoft.com/en-us/b27ca747-8fd2-4267-9979-4e2e14a5a19f
  */
-class PerformanceInfoWorker : public AsyncWorker {
+class PerformanceInfoWorker : public Napi::AsyncWorker {
     public:
-        PerformanceInfoWorker(Function& callback) : AsyncWorker(callback) {}
+        PerformanceInfoWorker(Napi::Function& callback) : AsyncWorker(callback) {}
         ~PerformanceInfoWorker() {}
     private:
         PERFORMANCE_INFORMATION PerformanceInformation;
-        
+
         void Execute(){
             SecureZeroMemory(&PerformanceInformation, sizeof(PERFORMANCE_INFORMATION));
 
@@ -48,16 +81,16 @@ class PerformanceInfoWorker : public AsyncWorker {
             }
         }
 
-        void OnError(const Error& e) {
-            stringstream error;
+        void OnError(const Napi::Error& e) {
+            std::stringstream error;
             error << e.what() << getLastErrorMessage();
-            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
+            Napi::Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {
-            HandleScope scope(Env());
+            Napi::HandleScope scope(Env());
+            Napi::Object ret = Napi::Object::New(Env());
 
-            Object ret = Object::New(Env());
             ret.Set("commitTotal", PerformanceInformation.CommitTotal);
             ret.Set("commitLimit", PerformanceInformation.CommitLimit);
             ret.Set("commitPeak", PerformanceInformation.CommitPeak);
@@ -76,41 +109,19 @@ class PerformanceInfoWorker : public AsyncWorker {
         }
 };
 
-Value getPerformanceInfo(const CallbackInfo& info) {
-    Env env = info.Env();
-
-    // Check argument length!
-    if (info.Length() < 1) {
-        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    // callback should be a Napi::Function
-    if (!info[0].IsFunction()) {
-        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    // Execute worker
-    Function cb = info[0].As<Function>();
-    (new PerformanceInfoWorker(cb))->Queue();
-    
-    return env.Undefined();
-}
-
 /*
  * Asycnronous Worker to Retrieve Windows Global Memory Status
- * 
+ *
  * @doc: https://msdn.microsoft.com/en-us/aa366589
  * @doc: https://msdn.microsoft.com/en-us/aa366770
  */
-class globalMemoryWorker : public AsyncWorker {
+class globalMemoryWorker : public Napi::AsyncWorker {
     public:
-        globalMemoryWorker(Function& callback) : AsyncWorker(callback) {}
+        globalMemoryWorker(Napi::Function& callback) : AsyncWorker(callback) {}
         ~globalMemoryWorker() {}
     private:
         MEMORYSTATUSEX statex;
-        
+
         void Execute() {
             SecureZeroMemory(&statex, sizeof(statex));
             statex.dwLength = sizeof(statex);
@@ -120,16 +131,16 @@ class globalMemoryWorker : public AsyncWorker {
             }
         }
 
-        void OnError(const Error& e) {
-            stringstream error;
+        void OnError(const Napi::Error& e) {
+            std::stringstream error;
             error << e.what() << getLastErrorMessage();
-            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
+            Napi::Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {
-            HandleScope scope(Env());
+            Napi::HandleScope scope(Env());
+            Napi::Object ret = Napi::Object::New(Env());
 
-            Object ret = Object::New(Env());
             ret.Set("dwMemoryLoad", statex.dwMemoryLoad);
             ret.Set("ullTotalPhys", statex.ullTotalPhys);
             ret.Set("ullAvailPhys", statex.ullAvailPhys);
@@ -143,81 +154,22 @@ class globalMemoryWorker : public AsyncWorker {
         }
 };
 
-Value globalMemoryStatus(const CallbackInfo& info) {
-    Env env = info.Env();
-
-    // Check argument length!
-    if (info.Length() < 1) {
-        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    // callback should be a Napi::Function
-    if (!info[0].IsFunction()) {
-        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    Function cb = info[0].As<Function>();
-    (new globalMemoryWorker(cb))->Queue();
-    
-    return env.Undefined();
-}
-
-/**
- * Retrieve Process Name and ID
- * 
- * @header: tlhelp32.h
- * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-createtoolhelp32snapshot
- * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32first
- * @doc: https://docs.microsoft.com/en-us/windows/desktop/api/tlhelp32/nf-tlhelp32-process32next
- */ 
-BOOL getProcessNameAndId(vector<pair<DWORD, string>>* vPairProc) {
-    PROCESSENTRY32 pe32;
-    HANDLE hProcessSnap;
- 
-    // Take a snapshot of all processes in the system.
-    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hProcessSnap == INVALID_HANDLE_VALUE) {
-        return false;
-    }
- 
-    // Set the size of the structure before using it.
-    pe32.dwSize = sizeof(PROCESSENTRY32);
- 
-    // Retrieve information about the first process,
-    // and exit if unsuccessful
-    if (!Process32First(hProcessSnap, &pe32)) {
-        CloseHandle(hProcessSnap); // clean the snapshot object
-        return false;
-    }
-    
-    // Insert rows in the processes map
-    do {
-        wstring wSzExeFile((wchar_t*) pe32.szExeFile);
-        vPairProc->push_back(make_pair(pe32.th32ProcessID, string(wSzExeFile.begin(), wSzExeFile.end())));
-    } while (Process32Next(hProcessSnap, &pe32));
- 
-    CloseHandle(hProcessSnap);
-    return true;
-}
-
 /*
  * Asycnronous Worker to Retrieve Windows Process Memory Info
- * 
+ *
  * @header: psapi.h
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/nf-psapi-getprocessmemoryinfo
  * @doc: https://docs.microsoft.com/fr-fr/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
  */
-class ProcessMemoryWorker : public AsyncWorker {
+class ProcessMemoryWorker : public Napi::AsyncWorker {
     public:
-        ProcessMemoryWorker(Function& callback) : AsyncWorker(callback) {}
+        ProcessMemoryWorker(Napi::Function& callback) : AsyncWorker(callback) {}
         ~ProcessMemoryWorker() {}
     private:
         struct PROCESS_MEMORY{
-            string error;
+            std::string error;
             DWORD processId;
-            string processName;
+            std::string processName;
             DWORD  cb;
             DWORD  PageFaultCount;
             SIZE_T PeakWorkingSetSize;
@@ -231,10 +183,10 @@ class ProcessMemoryWorker : public AsyncWorker {
             SIZE_T PrivateUsage;
         };
 
-        vector<PROCESS_MEMORY> vProcessMemory;
+        std::vector<PROCESS_MEMORY> vProcessMemory;
 
         void Execute() {
-            vector<pair<DWORD, string>> processNameAndId;
+            std::vector<std::pair<DWORD, std::string>> processNameAndId;
             BOOL status = getProcessNameAndId(&processNameAndId);
             if (!status) {
                 SetError("Failed status of getProcessNameAndId");
@@ -249,16 +201,16 @@ class ProcessMemoryWorker : public AsyncWorker {
                 SecureZeroMemory(&nProcessMemory, sizeof(nProcessMemory));
 
                 // Retrieve process name and id
-                pair<DWORD, string> process = processNameAndId.at(i);
+                std::pair<DWORD, std::string> process = processNameAndId.at(i);
 
                 nProcessMemory.processId = process.first;
                 nProcessMemory.processName = process.second;
-                
+
                 // Open process handle!
                 processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, false, process.first);
                 if(processHandle == NULL) {
-                    stringstream error;
-                    error << "Failed to OpenProcess id(" << process.first << "), error code (" << GetLastError() << ")" << endl;
+                    std::stringstream error;
+                    error << "Failed to OpenProcess id(" << process.first << "), error code (" << GetLastError() << ")" << std::endl;
                     nProcessMemory.error = error.str();
                     vProcessMemory.push_back(nProcessMemory);
                     continue;
@@ -286,23 +238,22 @@ class ProcessMemoryWorker : public AsyncWorker {
             }
         }
 
-        void OnError(const Error& e) {
-            stringstream error;
+        void OnError(const Napi::Error& e) {
+            std::stringstream error;
             error << e.what() << getLastErrorMessage();
-            Error::New(Env(), error.str()).ThrowAsJavaScriptException();
+            Napi::Error::New(Env(), error.str()).ThrowAsJavaScriptException();
         }
 
         void OnOK() {
-            HandleScope scope(Env());
+            Napi::HandleScope scope(Env());
+            Napi::Object ret = Napi::Object::New(Env());
 
-            Object ret = Object::New(Env());
             for(size_t i = 0; i < vProcessMemory.size(); i++){
-                Object oProcessMemory = Object::New(Env());
-
+                Napi::Object oProcessMemory = Napi::Object::New(Env());
                 PROCESS_MEMORY ProcessMemory = vProcessMemory.at(i);
 
                 ret.Set(ProcessMemory.processName, oProcessMemory);
-                if(ProcessMemory.error == string("")) {
+                if(ProcessMemory.error == std::string("")) {
                     oProcessMemory.Set("error", Env().Null());
                 }
                 else {
@@ -324,35 +275,69 @@ class ProcessMemoryWorker : public AsyncWorker {
         }
 };
 
-Value getProcessMemory(const CallbackInfo& info){
-    Env env = info.Env();
+Napi::Value globalMemoryStatus(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::Function cb;
 
-    // Check argument length!
     if (info.Length() < 1) {
-        Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
         return env.Null();
     }
-
-    // callback should be a Napi::Function
     if (!info[0].IsFunction()) {
-        Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        Napi::Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
         return env.Null();
     }
 
-    Function cb = info[0].As<Function>();
-    (new ProcessMemoryWorker(cb))->Queue();
-    
+    cb = info[0].As<Napi::Function>();
+    (new globalMemoryWorker(cb))->Queue();
+
     return env.Undefined();
 }
 
+Napi::Value getPerformanceInfo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    Napi::Function cb;
 
-// Initialize Native Addon
-Object Init(Env env, Object exports) {
-    exports.Set("getPerformanceInfo", Function::New(env, getPerformanceInfo));
-    exports.Set("globalMemoryStatus", Function::New(env, globalMemoryStatus));
-    exports.Set("getProcessMemory", Function::New(env, getProcessMemory));
+    if (info.Length() < 1) {
+        Napi::Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    if (!info[0].IsFunction()) {
+        Napi::Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    cb = info[0].As<Napi::Function>();
+    (new PerformanceInfoWorker(cb))->Queue();
+
+    return env.Undefined();
+}
+
+Napi::Value getProcessMemory(const Napi::CallbackInfo& info){
+    Napi::Env env = info.Env();
+    Napi::Function cb;
+
+    if (info.Length() < 1) {
+        Napi::Error::New(env, "Wrong number of argument provided!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    if (!info[0].IsFunction()) {
+        Napi::Error::New(env, "argument callback should be a Function!").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    cb = info[0].As<Napi::Function>();
+    (new ProcessMemoryWorker(cb))->Queue();
+
+    return env.Undefined();
+}
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+    exports.Set("getPerformanceInfo", Napi::Function::New(env, getPerformanceInfo));
+    exports.Set("globalMemoryStatus", Napi::Function::New(env, globalMemoryStatus));
+    exports.Set("getProcessMemory", Napi::Function::New(env, getProcessMemory));
+
     return exports;
 }
 
-// Export Addon as winmem
 NODE_API_MODULE(winmem, Init)

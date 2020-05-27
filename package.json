@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "node-addon-api": "^3.0.0",
-    "node-gyp-build": "^4.2.2"
+    "node-gyp-build": "^4.2.2",
+    "snyk": "^1.330.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^8.3.5",
@@ -49,7 +50,9 @@
     "install": "node-gyp rebuild",
     "doc": "jsdoc -c ./jsdoc.json -r -R ./README.md -P ./package.json --verbose",
     "coverage": "codecov",
-    "report": "nyc report --reporter=html"
+    "report": "nyc report --reporter=html",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -80,5 +83,6 @@
   "bugs": {
     "url": "https://github.com/SlimIO/Winmem/issues"
   },
-  "homepage": "https://github.com/SlimIO/Winmem#readme"
+  "homepage": "https://github.com/SlimIO/Winmem#readme",
+  "snyk": true
 }
